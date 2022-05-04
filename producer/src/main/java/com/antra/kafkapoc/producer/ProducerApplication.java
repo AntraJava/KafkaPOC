@@ -1,5 +1,6 @@
 package com.antra.kafkapoc.producer;
 
+import com.antra.kafkapoc.producer.pojo.UserActionEvent;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -14,26 +15,26 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 @SpringBootApplication
 public class ProducerApplication implements CommandLineRunner {
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, UserActionEvent> kafkaTemplate;
 
     @Bean
     public NewTopic topicTest() {
         return new NewTopic("testTopic", 3, (short) 2);
     }
 
-    public void sendMessage(String msg) {
-        ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send("testTopic", msg, msg);
-        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+    public void sendMessage(UserActionEvent event) {
+        ListenableFuture<SendResult<String, UserActionEvent>> future = kafkaTemplate.send("testTopic", event.getUserId(), event);
+        future.addCallback(new ListenableFutureCallback<>() {
 
             @Override
-            public void onSuccess(SendResult<String, String> result) {
-                System.out.println("Sent message=[" + msg +
+            public void onSuccess(SendResult<String, UserActionEvent> result) {
+                System.out.println("Sent userActionEvent =[" + event.getAction() +
                         "] with offset=[" + result.getRecordMetadata().offset() + "]");
             }
             @Override
             public void onFailure(Throwable ex) {
-                System.out.println("Unable to send message=["
-                        + msg + "] due to : " + ex.getMessage());
+                System.out.println("Unable to send userActionEvent=["
+                        + event.getAction() + "] due to : " + ex.getMessage());
             }
         });
     }
@@ -45,11 +46,10 @@ public class ProducerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        sendMessage("1");
-        sendMessage("2");
-        sendMessage("3");
-        sendMessage("4");
-        sendMessage("5");
-        sendMessage("6");
+        UserActionEvent event = new UserActionEvent();
+        event.setAction("upload file");
+        event.setUserId("1001");
+        event.setActionData("filelocation=s3://123//123.txt");
+        sendMessage(event);
     }
 }
