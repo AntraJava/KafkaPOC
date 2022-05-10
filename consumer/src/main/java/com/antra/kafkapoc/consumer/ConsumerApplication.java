@@ -22,7 +22,10 @@ public class ConsumerApplication{
 
     @KafkaListener(topics = "testTopic", groupId = "UserGroupA")
     public void listenGroupA(String message) {
-        System.out.println("Received: " + message);
+        System.out.println("Received in consumer 1: " + message);
     }
-
+    @KafkaListener(topics = "testTopic", groupId = "UserGroupB")
+    public void listenGroupAUser2(String message) {
+        System.out.println("Received in consumer 2: " + message);
+    }
 }
