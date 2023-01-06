@@ -10,6 +10,8 @@ import org.springframework.kafka.annotation.PartitionOffset;
 import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import java.time.Duration;
+
 @SpringBootApplication
 @EnableKafka
 public class ConsumerApplication{
@@ -24,7 +26,13 @@ public class ConsumerApplication{
     public void listenGroupA(String message) {
         System.out.println("Received in consumer 1: " + message);
     }
-    @KafkaListener(topics = "testTopic", groupId = "UserGroupB")
+//    @KafkaListener(topics = "testTopic", groupId = "UserGroupB")
+    @KafkaListener(groupId = "UserGroupB",
+            topicPartitions = @TopicPartition(topic = "testTopic",
+                    partitionOffsets = {
+                            @PartitionOffset(partition = "0", initialOffset = "0"),
+                            @PartitionOffset(partition = "1", initialOffset = "0"),
+                            @PartitionOffset(partition = "2", initialOffset = "0")}))
     public void listenGroupAUser2(String message) {
         System.out.println("Received in consumer 2: " + message);
     }
