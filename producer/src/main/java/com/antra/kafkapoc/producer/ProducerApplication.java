@@ -23,17 +23,15 @@ public class ProducerApplication implements CommandLineRunner {
 
     public void sendMessage(String msg) {
         ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send("testTopic", msg, msg);
-        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+        future.addCallback(new ListenableFutureCallback<>() {
 
             @Override
             public void onSuccess(SendResult<String, String> result) {
-                System.out.println("Sent message=[" + msg +
-                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+                System.out.println("Sent message=[" + msg + "] with offset=[" + result.getRecordMetadata().offset() + "]");
             }
             @Override
             public void onFailure(Throwable ex) {
-                System.out.println("Unable to send message=["
-                        + msg + "] due to : " + ex.getMessage());
+                System.out.println("Unable to send message=[" + msg + "] due to : " + ex.getMessage());
             }
         });
     }
