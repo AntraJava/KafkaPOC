@@ -52,8 +52,13 @@ public class ProducerApplication{
         SpringApplication.run(ProducerApplication.class, args);
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 100)
     public void scheduledSend() {
         sendMessage(RandomDataGenerator.randomUserEvent());
+//
+//        UserActionEvent event = new UserActionEvent();
+//        event.setUserId("11");
+//        event.setAction("test");
+//        sendMessage(event);
     }
 }

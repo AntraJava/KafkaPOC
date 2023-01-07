@@ -8,7 +8,7 @@ public class RandomDataGenerator {
     static String[] USER_ACTION_OPTIONS = {"Click","Type","Refresh","Upload","GoBack","ScrollUp","ScrollDown"};
     public static UserActionEvent randomUserEvent() {
         UserActionEvent event = new UserActionEvent();
-        event.setUserId(faker.numerify("###"));
+        event.setUserId(faker.numerify("##"));
         event.setAction(faker.options().option(USER_ACTION_OPTIONS));
         if (event.getAction().equals("Upload")) {
             event.setActionData("location:s3://"+faker.file().fileName());

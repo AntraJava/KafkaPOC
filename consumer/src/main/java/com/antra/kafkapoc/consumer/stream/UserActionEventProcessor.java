@@ -3,38 +3,43 @@ package com.antra.kafkapoc.consumer.stream;
 import com.antra.kafkapoc.consumer.pojo.UserActionEvent;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+
 @Component
 public class UserActionEventProcessor {
-
-    private static final Serde<String> USER_ACTION_EVENT_SERDE = Serdes.String();
-
     @Autowired
     public void buildPipeline(StreamsBuilder streamsBuilder) {
         KStream<String, UserActionEvent> messageStream = streamsBuilder
-                .stream("testTopic2", Consumed.with(Serdes.String(),UserActionEventSerdes.serdes()));
-//
-//        KTable<String, Long> wordCounts = messageStream
+                .stream("testTopic2"
+                        , Consumed.with(Serdes.String(),UserActionEventSerdes.serdes())
+                                .withOffsetResetPolicy(Topology.AutoOffsetReset.LATEST));
+        //        KTable<String, Long> wordCounts = messageStream
 //                .mapValues((ValueMapper<String, String>) String::toLowerCase)
 //                .flatMapValues(value -> Arrays.asList(value.split("\\W+")))
 //                .groupBy((key, word) -> word, Grouped.with(STRING_SERDE, STRING_SERDE))
 //                .count();
 //
 //        wordCounts.toStream().to("output-topic");
+        Duration windowSize = Duration.ofSeconds(30);
+
+        final Serde<Windowed<String>> windowedStringSerde =
+                WindowedSerdes.timeWindowedSerdeFrom(String.class, windowSize.toMillis());
+
         messageStream
-//                .filter()
-                .mapValues(event -> 1L)
-                .groupByKey(Grouped.with(Serdes.String(), Serdes.Long()))
-                .aggregate(() -> 0L,
-                        (key, value, aggregate) -> aggregate + value,
-                        Materialized.with(Serdes.String(), Serdes.Long())
-                        .as("userRank"));
+                .groupByKey(Grouped.with(Serdes.String(), UserActionEventSerdes.serdes()))
+                .windowedBy(TimeWindows.ofSizeWithNoGrace(windowSize))
+                .count(Materialized.as("userRank"));
     }
 }
 
