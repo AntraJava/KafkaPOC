@@ -18,26 +18,39 @@ import java.util.PriorityQueue;
 
 @Component
 public class UserActionEventProcessor {
+
+    Duration windowSize = Duration.ofSeconds(30);
+
     @Autowired
     public void buildPipeline(StreamsBuilder streamsBuilder) {
         KStream<String, UserActionEvent> messageStream = streamsBuilder
                 .stream("testTopic2"
-                        , Consumed.with(Serdes.String(),UserActionEventSerdes.serdes())
+                        , Consumed.with(Serdes.String(), UserActionEventSerdes.serdes())
                                 .withOffsetResetPolicy(Topology.AutoOffsetReset.LATEST));
-        //        KTable<String, Long> wordCounts = messageStream
-//                .mapValues((ValueMapper<String, String>) String::toLowerCase)
-//                .flatMapValues(value -> Arrays.asList(value.split("\\W+")))
-//                .groupBy((key, word) -> word, Grouped.with(STRING_SERDE, STRING_SERDE))
-//                .count();
-//
-//        wordCounts.toStream().to("output-topic");
-        Duration windowSize = Duration.ofSeconds(30);
+// // You can also choose to use Branch if messages can be put into different streams.
+// // USER_ACTION_OPTIONS = {"Click","Type","Refresh","Upload","GoBack","ScrollUp","ScrollDown"};
 
-        final Serde<Windowed<String>> windowedStringSerde =
-                WindowedSerdes.timeWindowedSerdeFrom(String.class, windowSize.toMillis());
-
-        messageStream
-                .groupByKey(Grouped.with(Serdes.String(), UserActionEventSerdes.serdes()))
+//        BranchedKStream<String, UserActionEvent> activeUserStream = messageStream.split();
+//        activeUserStream
+//                .branch(
+//                        (key, v) -> true, // condition
+//                        Branched.withConsumer(ks -> processCategoryEvent(ks)))
+//                .branch(
+//                        (key, v) -> true, // condition
+//                        Branched.withConsumer(ks -> processAllUserEvent(ks)));
+        KStream<String, UserActionEvent> userStream =  messageStream.filter((k,v)-> true);
+        KStream<String, UserActionEvent> categoryStream =  messageStream.filter((k,v)-> true);
+        this.processAllUserEvent(userStream);
+        this.processCategoryEvent(categoryStream);
+    }
+    private void processCategoryEvent(KStream<String, UserActionEvent> ks) {
+        ks.map((key, value) -> new KeyValue<>(value.getAction(), value))
+                .groupByKey( Grouped.with(Serdes.String(), UserActionEventSerdes.serdes()))
+                .windowedBy(TimeWindows.ofSizeWithNoGrace(windowSize))
+                .count(Materialized.as("categoryRank"));
+    }
+    private void processAllUserEvent(KStream<String, UserActionEvent> ks) {
+        ks.groupByKey(Grouped.with(Serdes.String(), UserActionEventSerdes.serdes()))
                 .windowedBy(TimeWindows.ofSizeWithNoGrace(windowSize))
                 .count(Materialized.as("userRank"));
     }
