@@ -20,12 +20,12 @@ public class ConsumerApplication{
         SpringApplication.run(ConsumerApplication.class, args);
     }
 
-    @KafkaListener(topics = "${kafka.default.topic}")
+   // @KafkaListener(topics = "${kafka.default.topic}")
     public void listenGroupA(UserActionEvent message) {
         System.out.println("Received: " + message);
     }
 
-    @KafkaListener(topics = "${kafka.default.topic}", groupId = "anotherJsonGroup")
+   // @KafkaListener(topics = "${kafka.default.topic}", groupId = "anotherJsonGroup")
     public void processMessage(UserActionEvent user) {
         System.out.println("Message received by consumer in second group: " + user.toString());
     }
