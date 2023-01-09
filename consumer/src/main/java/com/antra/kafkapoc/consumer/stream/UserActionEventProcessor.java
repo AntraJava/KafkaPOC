@@ -8,6 +8,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.stereotype.Component;
@@ -19,12 +20,14 @@ import java.util.PriorityQueue;
 @Component
 public class UserActionEventProcessor {
 
+    @Value("${kafka.default.topic}")
+    private String topic;
     Duration windowSize = Duration.ofSeconds(30);
 
     @Autowired
     public void buildPipeline(StreamsBuilder streamsBuilder) {
         KStream<String, UserActionEvent> messageStream = streamsBuilder
-                .stream("testTopic2"
+                .stream(topic
                         , Consumed.with(Serdes.String(), UserActionEventSerdes.serdes())
                                 .withOffsetResetPolicy(Topology.AutoOffsetReset.LATEST));
 // // You can also choose to use Branch if messages can be put into different streams.
